@@ -8,7 +8,7 @@ export const setAuthCookie = (
   cookieStore.set(cookieName, userId, {
     httpOnly: true,
     path: "/",
-    maxAge: 60 * 30,
+    maxAge: 60 * 60 * 24 * 7,
   });
 };
 
