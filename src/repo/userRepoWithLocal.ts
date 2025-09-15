@@ -32,12 +32,12 @@ export const userRepoWithLocal: Repo<User> = {
     }
     if (name) {
       data = data.filter((user) => {
-        return user.name === name;
+        return user.name.includes(name);
       });
     }
     if (email) {
       data = data.filter((user) => {
-        return user.email === email;
+        return user.email.includes(email);
       });
     }
     if (gender) {
@@ -65,16 +65,14 @@ export const userRepoWithLocal: Repo<User> = {
     if (data.some((u) => u.email === user.email)) {
       throw new Error("已存在的電子郵件");
     }
-    const lastId = data.length > 0 ? data[data.length - 1].id : "0";
-    const newId = String((Number(lastId) || 0) + 1);
 
-    const clonedUser = { ...user, id: newId };
-    setData([...data, clonedUser]);
+    setData([...data, user]);
 
-    return clonedUser;
+    return user;
   },
   update: async (user) => {
     const data = getData();
+    console.log(data, user);
 
     const index = data.findIndex((u) => u.id === user.id);
     if (index === -1) {
@@ -83,13 +81,10 @@ export const userRepoWithLocal: Repo<User> = {
     data[index] = user;
     if (
       data.filter((u) => {
-        return u.name === user.name;
-      }).length > 1 ||
-      data.filter((u) => {
         return u.email === user.email;
       }).length > 1
     ) {
-      throw new Error("已存在的帳號或電子郵件");
+      throw new Error("已存在的電子郵件");
     }
     setData(data);
     return user;

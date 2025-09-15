@@ -25,6 +25,7 @@ import { userRepoWithFetch } from "@/repo/userRepoWithFetch";
 import { taskWithErrorHandler } from "@/utils/taskHelper";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { userRepoWithLocal } from "@/repo/userRepoWithLocal";
 
 type UserQuery = {
   equal: Partial<User>;
@@ -128,7 +129,7 @@ export default function ListPage() {
                 email: keywordMail,
               },
               page: 0,
-              pageSize: 10,
+              pageSize: query.pageSize,
             });
           }}
         >
@@ -141,7 +142,7 @@ export default function ListPage() {
             setQuery({
               equal: {},
               page: 0,
-              pageSize: 10,
+              pageSize: query.pageSize,
             });
           }}
         >
@@ -255,17 +256,6 @@ export default function ListPage() {
                     >
                       刪除
                     </Button>
-                    {/* 常用 */}
-                    {editingUserId !== user.id && (
-                      <Button
-                        variant="default"
-                        onClick={() => {
-                          // 加到常用邏輯
-                        }}
-                      >
-                        加到常用
-                      </Button>
-                    )}
 
                     {/* 編輯/儲存/取消 */}
                     {editingUserId === user.id ? (
@@ -282,15 +272,35 @@ export default function ListPage() {
                         </Button>
                       </>
                     ) : (
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setEditingUserId(user.id);
-                          setEditingData(user);
-                        }}
-                      >
-                        編輯
-                      </Button>
+                      <>
+                        <Button
+                          variant="default"
+                          onClick={() => {
+                            // 加到常用邏輯
+                            void taskWithErrorHandler({
+                              task: async () => {
+                                await userRepoWithLocal.create(user);
+                                toast.info("已加入最愛");
+                              },
+                              onError: async () => {
+                                await userRepoWithLocal.update(user);
+                                toast.info("已更新最愛");
+                              },
+                            });
+                          }}
+                        >
+                          加到常用
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setEditingUserId(user.id);
+                            setEditingData(user);
+                          }}
+                        >
+                          編輯
+                        </Button>
+                      </>
                     )}
                   </TableCell>
                 </TableRow>

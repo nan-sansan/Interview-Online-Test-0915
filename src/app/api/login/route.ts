@@ -1,9 +1,14 @@
 import apiClientServerSide from "@/app/api/utils/apiClientServerSide";
+import { User } from "@/types/User";
 
 export async function POST(request: Request) {
   const { name, email } = await request.json();
-  const { data } = await apiClientServerSide.get("/v2/users", {
-    params: { name: name, email: email },
+  const { data: res } = await apiClientServerSide.get("/v2/users", {
+    params: { name: name, email: email, per_page: 999999 },
+  });
+
+  const data = res.filter((user: User) => {
+    return user.name === name && user.email === email;
   });
 
   const hasUser = data?.length > 0;
