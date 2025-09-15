@@ -43,10 +43,10 @@ export default function Pagination({
       <div className="flex items-center gap-2">
         第
         <Select onValueChange={(value) => setPage(Number(value))}>
-          <SelectTrigger>{page}</SelectTrigger>
+          <SelectTrigger>{page + 1}</SelectTrigger>
           <SelectContent>
-            {Array.from({ length: totalPages - 1 }).map((_, index) => (
-              <SelectItem key={index} value={String(index + 1)}>
+            {Array.from({ length: totalPages }).map((_, index) => (
+              <SelectItem key={index} value={String(index)}>
                 {index + 1}
               </SelectItem>
             ))}
