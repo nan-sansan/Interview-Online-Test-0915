@@ -1,8 +1,12 @@
 import axios from "axios";
 
 const apiClientServerSide = axios.create({
-  baseURL: "https://gorest.co.in/public/v2/users",
+  baseURL: "https://gorest.co.in/public/",
   timeout: 30000,
+  headers: {
+    Authorization: `Bearer ${process.env.NEXT_PUBLIC_GOREST_TOKEN}`,
+    "Content-Type": "application/json",
+  },
 });
 
 apiClientServerSide.interceptors.response.use(

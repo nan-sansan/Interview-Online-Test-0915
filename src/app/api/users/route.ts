@@ -1,54 +1,53 @@
 import { User } from "@/types/User";
-import { dataPool } from "@/app/api/_data/users";
+import apiClientServerSide from "@/app/api/utils/apiClientServerSide";
+import { taskWithErrorHandler } from "@/utils/taskHelper";
 
 export async function POST(request: Request) {
-  const user: User = await request.json();
-  const allUser = dataPool.getAll();
-  const found = allUser.find(({ name, email }) => {
-    return user.name === name || user.email === email;
-  });
+  const postUser: User = await request.json();
 
-  if (found) {
-    return Response.json(
-      {
-        message: "已存在的使用者",
-      },
-      {
-        status: 400,
-      },
-    );
-  } else {
-    dataPool.add(user);
-    const all = dataPool.getAll();
-    const lastUser = all[all.length - 1];
-    return Response.json({ message: "新增成功", user: lastUser });
-  }
+  return taskWithErrorHandler({
+    task: async () => {
+      const { data } = await apiClientServerSide({
+        url: "/v2/users",
+        method: "POST",
+        data: postUser,
+      });
+      return Response.json({ message: "新增成功", user: data });
+    },
+    onError: (e) => {
+      return Response.json({ message: "新增失敗: " + e.message });
+    },
+  });
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
   const name = searchParams.get("name");
   const email = searchParams.get("email");
   const gender = searchParams.get("gender");
   const status = searchParams.get("status");
   const page = Number(searchParams.get("page")) || 0;
   const size = Number(searchParams.get("size")) || 10;
+  return taskWithErrorHandler({
+    task: async () => {
+      const { data, headers } = await apiClientServerSide({
+        url: "/v2/users",
+        method: "GET",
+        params: {
+          name,
+          email,
+          gender,
+          status,
+          page: page + 1,
+          per_page: size,
+        },
+      });
+      const total = Number(headers["x-pagination-total"]) || 0;
 
-  const allUser = dataPool.getAll();
-  console.log(allUser);
-  const users = allUser.filter((user) => {
-    if (id && user.id !== id) return false;
-    if (name && user.name !== name) return false;
-    if (email && user.email !== email) return false;
-    if (gender && user.gender !== gender) return false;
-    if (status && user.status !== status) return false;
-
-    return true;
+      return Response.json({ users: data, total });
+    },
+    onError: (e) => {
+      return Response.json({ message: "獲取資料失敗: " + e.message });
+    },
   });
-  const total = users.length;
-  const startIndex = page * size;
-  const endIndex = startIndex + size;
-
-  return Response.json({ users: users.slice(startIndex, endIndex), total });
 }

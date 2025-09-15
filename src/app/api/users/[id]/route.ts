@@ -1,18 +1,32 @@
+import apiClientServerSide from "@/app/api/utils/apiClientServerSide";
 import { User } from "@/types/User";
-import { dataPool } from "@/app/api/_data/users";
+import { taskWithErrorHandler } from "@/utils/taskHelper";
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const user: User = await request.json();
-  user.id = (await params).id;
+  return taskWithErrorHandler({
+    task: async () => {
+      const user: User = await request.json();
+      const id = (await params).id;
 
-  dataPool.update(user);
+      const { data } = await apiClientServerSide.put(`v2/users/${id}`, user);
 
-  return Response.json({
-    message: "修改成功",
-    user: user,
+      return Response.json(
+        {
+          message: "修改成功",
+          user: data,
+        },
+        { status: 200 },
+      );
+    },
+    onError: (e) => {
+      return Response.json(
+        { message: "伺服器錯誤: " + e.message },
+        { status: 500 },
+      );
+    },
   });
 }
 
@@ -20,9 +34,24 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const id = (await params).id;
-  dataPool.delete({ id: id } as User);
-  return Response.json({
-    message: "刪除成功",
+  return taskWithErrorHandler({
+    task: async () => {
+      const id = (await params).id;
+
+      await apiClientServerSide.delete(`v2/users/${id}`);
+
+      return Response.json(
+        {
+          message: "刪除成功",
+        },
+        { status: 200 },
+      );
+    },
+    onError: (e) => {
+      return Response.json(
+        { message: "伺服器錯誤: " + e.message },
+        { status: 500 },
+      );
+    },
   });
 }

@@ -1,22 +1,31 @@
-import { dataPool } from "@/app/api/_data/users";
+import apiClientServerSide from "@/app/api/utils/apiClientServerSide";
 
 export async function POST(request: Request) {
   const { name, email } = await request.json();
-  const allUsers = dataPool.getAll();
-
-  const isLoginSuccess = allUsers.some((user) => {
-    return user.name === name && user.email === email;
+  const { data } = await apiClientServerSide.get("/v2/users", {
+    params: { name: name, email: email },
   });
-  if (isLoginSuccess) {
+
+  const hasUser = data?.length > 0;
+  if (!hasUser) {
+    return Response.json(
+      {
+        message: `登入失敗: name 或 email 錯誤`,
+      },
+      { status: 401 },
+    );
+  }
+
+  if (data[0].status === "active") {
     return Response.json({
       message: `登入成功`,
     });
   } else {
     return Response.json(
       {
-        message: `登入失敗`,
+        message: `登入失敗: 該帳號不在活躍狀態`,
       },
-      { status: 401 },
+      { status: 403 },
     );
   }
 }

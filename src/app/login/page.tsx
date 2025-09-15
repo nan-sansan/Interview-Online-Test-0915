@@ -26,7 +26,6 @@ export default function LoginPage() {
   const userRepo = useUserRepo();
 
   const onSubmit = async (values: User) => {
-    console.log(values);
     const { total } = await userRepo.query({
       equal: { name: values.name, email: values.email },
       page: 0,
@@ -52,7 +51,7 @@ export default function LoginPage() {
                 rules={{
                   required: "請輸入名稱",
                   pattern: {
-                    value: /^[A-Za-z0-9_]+$/,
+                    value: /^[A-Za-z0-9_\s]+$/,
                     message: "只能輸入英文、數字或底線",
                   },
                 }}
