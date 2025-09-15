@@ -9,7 +9,6 @@ export const getUsersApi = async (
     url: "/api/users",
     params: query,
   });
-  console.log(res);
   return res.data as { users: User[]; total: number };
 };
 

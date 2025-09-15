@@ -1,4 +1,5 @@
 "use client";
+
 import {
   Table,
   TableBody,
@@ -17,41 +18,136 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { User } from "@/types/User";
-import { useUserRepo } from "@/hooks/useUserRepo";
+import Pagination from "@/components/common/Pagination";
+import { userRepoWithFetch } from "@/repo/userRepoWithFetch";
+import { taskWithErrorHandler } from "@/utils/taskHelper";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+
+type UserQuery = {
+  equal: Partial<User>;
+  page: number;
+  pageSize: number;
+};
 
 export default function ListPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [page, setPage] = useState(0);
-  const [size, setSize] = useState(10);
+  const [query, setQuery] = useState<UserQuery>({
+    equal: {},
+    page: 0,
+    pageSize: 10,
+  });
+
   const [total, setTotal] = useState(0);
+  const [keywordName, setKeywordName] = useState("");
+  const [keywordMail, setKeywordMail] = useState("");
 
-  const userRepo = useUserRepo();
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editingData, setEditingData] = useState<Partial<User>>({});
 
-  const loadData = useCallback(
-    async (page: number, size: number) => {
-      const { content, total } = await userRepo.query({ page, pageSize: size });
-      setUsers(content);
-      setTotal(total);
-    },
-    [userRepo],
-  );
+  const loadData = async (query: UserQuery) => {
+    await taskWithErrorHandler({
+      task: async () => {
+        const { content, total } = await userRepoWithFetch.query(query);
+        setUsers(content);
+        setTotal(total);
+      },
+      onError: (error) => {
+        console.log(error);
+      },
+    });
+  };
+
+  async function handleSave(user: User) {
+    await taskWithErrorHandler({
+      task: async () => {
+        await userRepoWithFetch.update({
+          ...user,
+          ...editingData, // 把編輯後的資料覆蓋
+        });
+
+        await loadData(query);
+
+        setEditingUserId(null);
+        setEditingData({});
+
+        toast.success(`${user.name} 已更新成功`);
+      },
+      onError: (e) => {
+        toast.error(`更新失敗：${e.message}`);
+      },
+    });
+  }
 
   useEffect(() => {
-    void loadData(page, size);
-  }, [page, size, loadData]);
+    void loadData(query);
+  }, [query]);
 
   async function handleDelete(userId: string, username: string) {
     const isConfirm = confirm(`確定要刪除 ${username} 用戶？`);
     if (isConfirm) {
-      await userRepo.delete({ id: userId } as User);
-      await loadData(page, size);
+      void taskWithErrorHandler({
+        task: async () => {
+          await userRepoWithFetch.delete({ id: userId } as User);
+          await loadData(query);
+          toast.success(`${username} 已被刪除`);
+        },
+        onError: (e) => {
+          toast.error(e.message);
+        },
+      });
     }
   }
   return (
     <div className="flex flex-col w-full h-full items-center justify-between gap-5 py-10 ">
-      <h1 className="text-2xl  font-bold w-[1000px]">用戶列表</h1>
+      <div className="flex w-[calc(100%-100px)] items-center justify-center gap-2">
+        <h1 className="text-2xl  font-bold w-[1000px]">通訊錄列表</h1>
+        <div className="p-2">
+          <Input
+            value={keywordMail}
+            onChange={(e) => setKeywordMail(e.target.value)}
+            className="w-[300px] "
+            placeholder="請輸入欲搜尋的電子郵件"
+          ></Input>
+        </div>
+        <div className="p-2">
+          <Input
+            value={keywordName}
+            onChange={(e) => setKeywordName(e.target.value)}
+            className="w-[300px] "
+            placeholder="請輸入欲搜尋的員工名稱"
+          ></Input>
+        </div>
+        <Button
+          onClick={() => {
+            setQuery({
+              equal: {
+                name: keywordName,
+                email: keywordMail,
+              },
+              page: 0,
+              pageSize: 10,
+            });
+          }}
+        >
+          搜尋
+        </Button>
+        <Button
+          onClick={() => {
+            setKeywordMail("");
+            setKeywordName("");
+            setQuery({
+              equal: {},
+              page: 0,
+              pageSize: 10,
+            });
+          }}
+        >
+          重置
+        </Button>
+      </div>
       <div className="flex-1 bg-white/60 p-3 rounded-md shadow-xs overflow-y-auto">
         <Table className="w-[1000px] mx-auto p-[20px] ">
           <TableHeader>
@@ -66,69 +162,144 @@ export default function ListPage() {
             {users &&
               users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell>{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.gender}</TableCell>
+                  {/* 帳號 */}
                   <TableCell>
-                    <Select
-                      defaultValue={user.status}
-                      onValueChange={async (value: "active" | "inactive") =>
-                        await userRepo.update({ ...user, status: value })
-                      }
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="選擇狀態" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>狀態</SelectLabel>
-                          <SelectItem value="active">活躍帳戶</SelectItem>
-                          <SelectItem value="inactive">非活躍帳戶</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+                    {editingUserId === user.id ? (
+                      <Input
+                        value={editingData.name ?? user.name}
+                        onChange={(e) =>
+                          setEditingData((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
+                        }
+                      />
+                    ) : (
+                      user.name
+                    )}
                   </TableCell>
+
+                  {/* Email */}
+                  <TableCell>
+                    {editingUserId === user.id ? (
+                      <Input
+                        value={editingData.email ?? user.email}
+                        onChange={(e) =>
+                          setEditingData((prev) => ({
+                            ...prev,
+                            email: e.target.value,
+                          }))
+                        }
+                      />
+                    ) : (
+                      user.email
+                    )}
+                  </TableCell>
+
+                  {/* 性別 */}
+                  <TableCell>
+                    {editingUserId === user.id ? (
+                      <Select
+                        value={editingData.gender ?? user.gender}
+                        onValueChange={(value) =>
+                          setEditingData((prev) => ({ ...prev, gender: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="選擇性別" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">男性</SelectItem>
+                          <SelectItem value="female">女性</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : user.gender === "male" ? (
+                      "男性"
+                    ) : (
+                      "女性"
+                    )}
+                  </TableCell>
+
+                  {/* 狀態 */}
+                  <TableCell>
+                    {editingUserId === user.id ? (
+                      <Select
+                        value={editingData.status ?? user.status}
+                        onValueChange={(value) =>
+                          setEditingData((prev) => ({ ...prev, status: value }))
+                        }
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="選擇狀態" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>狀態</SelectLabel>
+                            <SelectItem value="active">活躍帳戶</SelectItem>
+                            <SelectItem value="inactive">非活躍帳戶</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    ) : user.status === "active" ? (
+                      "活躍帳戶"
+                    ) : (
+                      "非活躍帳戶"
+                    )}
+                  </TableCell>
+
+                  {/* 刪除 */}
                   <TableCell>
                     <Button
                       variant="destructive"
-                      onClick={() => {
-                        handleDelete(user.id, user.name);
-                      }}
+                      onClick={() => handleDelete(user.id, user.name)}
                     >
                       刪除
                     </Button>
+                  </TableCell>
+
+                  {/* 編輯/儲存/取消 */}
+                  <TableCell>
+                    {editingUserId === user.id ? (
+                      <div className="flex gap-2">
+                        <Button onClick={() => handleSave(user)}>儲存</Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setEditingUserId(null);
+                            setEditingData({});
+                          }}
+                        >
+                          取消
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setEditingUserId(user.id);
+                          setEditingData(user);
+                        }}
+                      >
+                        編輯
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
           </TableBody>
         </Table>
       </div>
-      <div className="flex gap-2">
-        <Select onValueChange={(value) => setSize(Number(value))}>
-          <SelectTrigger>{size}</SelectTrigger>
-          <SelectContent>
-            {["5", "10", "15", "20", "50"].map((item) => (
-              <SelectItem key={item} value={item}>
-                {item}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          variant="outline"
-          disabled={page === 0}
-          onClick={() => setPage(page - 1)}
-        >
-          上一頁
-        </Button>
-        <Button
-          variant="outline"
-          disabled={page === Math.ceil(total / size) - 1}
-          onClick={() => setPage(page + 1)}
-        >
-          下一頁
-        </Button>
-      </div>
+      <Pagination
+        query={query}
+        onQueryChangeAction={({ page, pageSize }) => {
+          setQuery({
+            equal: query.equal,
+            page,
+            pageSize,
+          });
+        }}
+        total={total}
+      />
     </div>
   );
 }
