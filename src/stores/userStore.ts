@@ -19,6 +19,7 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         await logoutApi();
         set({ name: null });
+        window.location.href = "/";
       },
     }),
     { name: "auth-storage" },
