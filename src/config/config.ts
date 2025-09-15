@@ -12,5 +12,5 @@ export const workRoute = [
   },
   { path: "/userList", display: "通訊錄列表", icon: List, loginDisable: false },
   //TODO
-  { path: "/userList", display: "常用聯絡人", icon: Send },
+  { path: "/contactsList", display: "常用聯絡人", icon: Send },
 ];
