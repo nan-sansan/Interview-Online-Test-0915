@@ -248,19 +248,28 @@ export default function ListPage() {
                   </TableCell>
 
                   {/* 刪除 */}
-                  <TableCell>
+                  <TableCell className="flex gap-3">
                     <Button
                       variant="destructive"
                       onClick={() => handleDelete(user.id, user.name)}
                     >
                       刪除
                     </Button>
-                  </TableCell>
+                    {/* 常用 */}
+                    {editingUserId !== user.id && (
+                      <Button
+                        variant="default"
+                        onClick={() => {
+                          // 加到常用邏輯
+                        }}
+                      >
+                        加到常用
+                      </Button>
+                    )}
 
-                  {/* 編輯/儲存/取消 */}
-                  <TableCell>
+                    {/* 編輯/儲存/取消 */}
                     {editingUserId === user.id ? (
-                      <div className="flex gap-2">
+                      <>
                         <Button onClick={() => handleSave(user)}>儲存</Button>
                         <Button
                           variant="outline"
@@ -271,7 +280,7 @@ export default function ListPage() {
                         >
                           取消
                         </Button>
-                      </div>
+                      </>
                     ) : (
                       <Button
                         variant="outline"
