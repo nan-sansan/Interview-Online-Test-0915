@@ -4,11 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { User } from "@/types/User";
-import { useUserRepo } from "@/hooks/useUserRepo";
 import { useForm } from "react-hook-form";
 import {
   Form,
@@ -18,13 +15,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { taskWithErrorHandler } from "@/utils/taskHelper";
+import { userRepoWithFetch } from "@/repo/userRepoWithFetch";
 
 export default function RegisterPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [gender, setGender] = useState("O");
-  const router = useRouter();
-  const userRepo = useUserRepo();
   const form = useForm<User>({
     defaultValues: {
       name: "",
@@ -42,40 +36,45 @@ export default function RegisterPage() {
       gender: values.gender,
       status: "active",
     };
-
-    try {
-      await userRepo.create(newUser);
-      toast.success("註冊成功");
-      //註冊完直接登入
-      router.push("/login");
-    } catch {
-      toast.error("註冊失敗");
-    }
+    taskWithErrorHandler({
+      task: async () => {
+        await userRepoWithFetch.create(newUser);
+        toast.success("員工登錄成功");
+        form.reset({
+          name: "",
+          email: "",
+          gender: "",
+        });
+      },
+      onError: (error) => {
+        toast.error("員工登錄失敗 " + error.message);
+      },
+    });
   };
 
   return (
     <div className="flex w-[calc(100%-150px)] h-[calc(100%-50px)] items-center justify-center ">
       <div className="bg-white/60  w-[500px] mx-auto flex flex-col gap-5 p-[20px] rounded-md shadow-xs">
         <>
-          <h1 className="text-2xl font-bold">註冊</h1>
+          <h1 className="text-2xl font-bold">員工登錄</h1>
         </>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
               rules={{
-                required: "請輸入名稱",
+                required: "請輸入員工名稱",
                 pattern: {
-                  value: /^[A-Za-z0-9_]+$/,
-                  message: "只能輸入英文、數字或底線",
+                  value: /\S+/,
+                  message: "名稱不能是空白",
                 },
               }}
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>帳號名稱</FormLabel>
+                  <FormLabel>員工名稱</FormLabel>
                   <FormControl>
-                    <Input placeholder="exampleAccount" {...field} />
+                    <Input placeholder="請輸入員工名稱: 王小明" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -93,9 +92,12 @@ export default function RegisterPage() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>電子郵件</FormLabel>
+                  <FormLabel>員工電子郵件</FormLabel>
                   <FormControl>
-                    <Input placeholder="example@gmail.com" {...field} />
+                    <Input
+                      placeholder="請輸入員工電子郵件: example@gmail.com"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -103,13 +105,13 @@ export default function RegisterPage() {
             />
             <FormField
               rules={{
-                required: "請選擇性別",
+                required: "請選擇員工性別",
               }}
               control={form.control}
               name="gender"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>性別</FormLabel>
+                  <FormLabel>員工性別</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
@@ -126,6 +128,7 @@ export default function RegisterPage() {
                       </div>
                     </RadioGroup>
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />

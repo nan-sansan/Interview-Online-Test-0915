@@ -7,6 +7,20 @@ export async function POST(request: Request) {
 
   return taskWithErrorHandler({
     task: async () => {
+      const { headers } = await apiClientServerSide({
+        url: "/v2/users",
+        method: "GET",
+        params: {
+          email: postUser.email,
+        },
+      });
+
+      const total = Number(headers["x-pagination-total"]) || 0;
+      if (total > 0) {
+        throw new Error("重複的電子郵件");
+      }
+      console.log(total);
+
       const { data } = await apiClientServerSide({
         url: "/v2/users",
         method: "POST",
@@ -15,7 +29,10 @@ export async function POST(request: Request) {
       return Response.json({ message: "新增成功", user: data });
     },
     onError: (e) => {
-      return Response.json({ message: "新增失敗: " + e.message });
+      return Response.json(
+        { message: "新增失敗: " + e.message },
+        { status: 400 },
+      );
     },
   });
 }
@@ -47,7 +64,10 @@ export async function GET(request: Request) {
       return Response.json({ users: data, total });
     },
     onError: (e) => {
-      return Response.json({ message: "獲取資料失敗: " + e.message });
+      return Response.json(
+        { message: "獲取資料失敗: " + e.message },
+        { status: 400 },
+      );
     },
   });
 }

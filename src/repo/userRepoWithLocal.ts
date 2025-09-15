@@ -62,8 +62,8 @@ export const userRepoWithLocal: Repo<User> = {
   },
   create: async (user) => {
     const data = getData();
-    if (data.some((u) => u.name === user.name || u.email === user.email)) {
-      throw new Error("已存在的帳號或電子郵件");
+    if (data.some((u) => u.email === user.email)) {
+      throw new Error("已存在的電子郵件");
     }
     const lastId = data.length > 0 ? data[data.length - 1].id : "0";
     const newId = String((Number(lastId) || 0) + 1);
