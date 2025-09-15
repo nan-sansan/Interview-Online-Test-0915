@@ -117,16 +117,12 @@ export default function RegisterPage() {
                       className="flex"
                     >
                       <div className="flex gap-3">
-                        <RadioGroupItem value="M" id="r1" />
+                        <RadioGroupItem value="male" id="r1" />
                         <Label htmlFor="r1">男</Label>
                       </div>
                       <div className="flex gap-3">
-                        <RadioGroupItem value="F" id="r2" />
+                        <RadioGroupItem value="female" id="r2" />
                         <Label htmlFor="r2">女</Label>
-                      </div>
-                      <div className="flex gap-3">
-                        <RadioGroupItem value="O" id="r3" />
-                        <Label htmlFor="r3">其他</Label>
                       </div>
                     </RadioGroup>
                   </FormControl>
