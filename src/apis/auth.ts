@@ -7,3 +7,10 @@ export const loginApi = async (name: string, email: string) => {
     data: { name: name, email: email },
   });
 };
+
+export const logoutApi = async () => {
+  return await apiClient({
+    method: "GET",
+    url: "/api/logout",
+  });
+};

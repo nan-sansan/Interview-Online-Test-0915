@@ -1,11 +1,17 @@
 import apiClientServerSide from "@/app/api/utils/apiClientServerSide";
 import { User } from "@/types/User";
 import { taskWithErrorHandler } from "@/utils/taskHelper";
+import { getAuthCookie, getUnAuthResponse } from "@/app/api/utils/cookieHelper";
+import { cookies } from "next/headers";
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const authCookie = getAuthCookie(await cookies());
+  if (!authCookie) {
+    return getUnAuthResponse();
+  }
   return taskWithErrorHandler({
     task: async () => {
       const user: User = await request.json();
@@ -34,6 +40,10 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const authCookie = getAuthCookie(await cookies());
+  if (!authCookie) {
+    return getUnAuthResponse();
+  }
   return taskWithErrorHandler({
     task: async () => {
       const id = (await params).id;

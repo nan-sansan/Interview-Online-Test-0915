@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils";
 import { workRoute } from "@/config/config";
 import { useRouter } from "next/navigation";
 import { isShouldShow } from "@/utils/routeHelper";
+import { userRepoWithFetch } from "@/repo/userRepoWithFetch";
+import { toast } from "sonner";
+import { taskWithErrorHandler } from "@/utils/taskHelper";
 
 export default function WelcomePage() {
   const { name, logout } = useAuthStore();
@@ -60,6 +63,24 @@ export default function WelcomePage() {
             }
           })}
         </div>
+        <Button
+          onClick={() => {
+            void taskWithErrorHandler({
+              task: async () => {
+                const { total } = await userRepoWithFetch.query({
+                  page: 0,
+                  pageSize: 10,
+                });
+                toast.success("API訪問成功，資料總數: " + total);
+              },
+              onError: (e) => {
+                toast.error(e.message);
+              },
+            });
+          }}
+        >
+          api權限測試
+        </Button>
       </div>
     </div>
   );

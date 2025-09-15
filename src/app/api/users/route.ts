@@ -1,8 +1,14 @@
 import { User } from "@/types/User";
 import apiClientServerSide from "@/app/api/utils/apiClientServerSide";
 import { taskWithErrorHandler } from "@/utils/taskHelper";
+import { getAuthCookie, getUnAuthResponse } from "@/app/api/utils/cookieHelper";
+import { cookies } from "next/headers";
 
 export async function POST(request: Request) {
+  const authCookie = getAuthCookie(await cookies());
+  if (!authCookie) {
+    return getUnAuthResponse();
+  }
   const postUser: User = await request.json();
 
   return taskWithErrorHandler({
@@ -19,7 +25,6 @@ export async function POST(request: Request) {
       if (total > 0) {
         throw new Error("重複的電子郵件");
       }
-      console.log(total);
 
       const { data } = await apiClientServerSide({
         url: "/v2/users",
@@ -38,6 +43,10 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  const authCookie = getAuthCookie(await cookies());
+  if (!authCookie) {
+    return getUnAuthResponse();
+  }
   const { searchParams } = new URL(request.url);
   const name = searchParams.get("name");
   const email = searchParams.get("email");

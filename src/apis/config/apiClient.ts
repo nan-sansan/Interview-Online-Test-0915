@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useAuthStore } from "@/stores/userStore";
 
 const apiClient = axios.create({
   baseURL: "http://localhost:3000/",
@@ -11,6 +12,10 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
+    const status = error.response?.status;
+    if (status === 401) {
+      useAuthStore.getState().logout();
+    }
     // 請求失敗時統一處理錯誤
     if (error.response?.data.message) {
       error.message = error.response.data.message;

@@ -152,7 +152,7 @@ export default function ListPage() {
         <Table className="w-[1000px] mx-auto p-[20px] ">
           <TableHeader>
             <TableRow>
-              <TableHead>帳號</TableHead>
+              <TableHead>員工名稱</TableHead>
               <TableHead>電子郵件</TableHead>
               <TableHead>性別</TableHead>
               <TableHead colSpan={2}>狀態</TableHead>
@@ -162,7 +162,7 @@ export default function ListPage() {
             {users &&
               users.map((user) => (
                 <TableRow key={user.id}>
-                  {/* 帳號 */}
+                  {/* 員工名稱 */}
                   <TableCell>
                     {editingUserId === user.id ? (
                       <Input

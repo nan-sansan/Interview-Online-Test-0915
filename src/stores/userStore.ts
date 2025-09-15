@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { loginApi } from "@/apis/auth";
+import { loginApi, logoutApi } from "@/apis/auth";
 
 interface AuthState {
   name: string | null;
@@ -17,7 +17,7 @@ export const useAuthStore = create<AuthState>()(
         set({ name });
       },
       logout: async () => {
-        //TODO 可能需要實作登出的API
+        await logoutApi();
         set({ name: null });
       },
     }),

@@ -1,5 +1,7 @@
 import apiClientServerSide from "@/app/api/utils/apiClientServerSide";
 import { User } from "@/types/User";
+import { cookies } from "next/headers";
+import { setAuthCookie } from "@/app/api/utils/cookieHelper";
 
 export async function POST(request: Request) {
   const { name, email } = await request.json();
@@ -21,6 +23,9 @@ export async function POST(request: Request) {
     );
   }
   if (data[0].status === "active") {
+    const cookieStore = await cookies();
+    setAuthCookie(cookieStore, data[0].id);
+
     return Response.json({
       message: `登入成功`,
     });
