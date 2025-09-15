@@ -12,7 +12,10 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     // 請求失敗時統一處理錯誤
-    console.error("API Error:", error.message);
+    if (error.response?.data.message) {
+      error.message = error.response.data.message;
+    }
+    console.warn("API Error:", error.message);
     return Promise.reject(error);
   },
 );

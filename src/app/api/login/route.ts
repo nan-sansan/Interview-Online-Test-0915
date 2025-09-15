@@ -15,7 +15,6 @@ export async function POST(request: Request) {
       { status: 401 },
     );
   }
-
   if (data[0].status === "active") {
     return Response.json({
       message: `登入成功`,

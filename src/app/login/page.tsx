@@ -12,9 +12,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { User } from "@/types/User";
-import { useUserRepo } from "@/hooks/useUserRepo";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { taskWithErrorHandler } from "@/utils/taskHelper";
 
 export default function LoginPage() {
   const { login } = useAuthStore();
@@ -23,22 +23,18 @@ export default function LoginPage() {
     defaultValues: { name: "", email: "" },
     mode: "onChange",
   });
-  const userRepo = useUserRepo();
 
   const onSubmit = async (values: User) => {
-    const { total } = await userRepo.query({
-      equal: { name: values.name, email: values.email },
-      page: 0,
-      pageSize: 10,
+    taskWithErrorHandler({
+      task: async () => {
+        await login(values.name, values.email);
+        toast.success("登入成功");
+        router.push("/");
+      },
+      onError: (e) => {
+        toast.error(e.message);
+      },
     });
-
-    if (total > 0) {
-      login(values.name);
-      toast.success("登入成功");
-      router.push("/");
-    } else {
-      toast.error("登入失敗");
-    }
   };
   return (
     <div className="flex w-[calc(100%-150px)] h-[calc(100%-50px)] items-center justify-center ">
@@ -49,10 +45,10 @@ export default function LoginPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
                 rules={{
-                  required: "請輸入名稱",
+                  required: "請輸入員工名稱",
                   pattern: {
-                    value: /^[A-Za-z0-9_\s]+$/,
-                    message: "只能輸入英文、數字或底線",
+                    value: /\S+/,
+                    message: "名稱不能是空白",
                   },
                 }}
                 control={form.control}

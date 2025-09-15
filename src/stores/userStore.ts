@@ -1,20 +1,25 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { loginApi } from "@/apis/auth";
 
-interface AuthStore {
+interface AuthState {
   name: string | null;
-  login: (name: string) => void;
-  logout: () => void;
+  login: (name: string, email: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthStore>()(
+export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       name: null,
-      login: (name) => {
-        set({ name: name });
+      login: async (name, email) => {
+        await loginApi(name, email);
+        set({ name });
       },
-      logout: () => set({ name: null }),
+      logout: async () => {
+        //TODO 可能需要實作登出的API
+        set({ name: null });
+      },
     }),
     { name: "auth-storage" },
   ),
