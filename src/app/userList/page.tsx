@@ -279,12 +279,12 @@ export default function ListPage() {
                             // 加到常用邏輯
                             void taskWithErrorHandler({
                               task: async () => {
-                                await userRepoWithLocal.create(user);
-                                toast.info("已加入最愛");
-                              },
-                              onError: async () => {
                                 await userRepoWithLocal.update(user);
                                 toast.info("已更新最愛");
+                              },
+                              onError: async () => {
+                                await userRepoWithLocal.create(user);
+                                toast.info("已加入最愛");
                               },
                             });
                           }}
